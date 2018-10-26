@@ -1,0 +1,322 @@
+<html>
+<head>
+<title>カレンダー</title>
+<meta charset="utf-8">
+<script type="text/javascript">
+
+window.onload = function() {
+  setCalendar();
+  setList();
+};
+
+
+function setCalendar(yy, mm) {
+  var yy, mm; 
+  // yy,mmが未定義な場合、開いた際の年月を変数yy,mmに付与する
+  if (!yy && !mm) {
+    var yy = new Date().getFullYear();
+    var mm = new Date().getMonth();
+    mm = mm + 1;
+  }
+  var bDate = new Date(yy,mm-1,0); // 前月末
+  var tDate = new Date(yy,mm,0); // 当月末
+  bedd = bDate.getDate(); // 前月末日
+  bedy = bDate.getDay(); // 前月末曜日
+  thdd = tDate.getDate(); // 当月末日
+  thdy = tDate.getDay(); // 当月末曜日
+  var totalDays;
+
+
+  //カレンダーの数字を配列daysに格納
+  var days = [];
+  var i=0,j=0;
+　//前月末が土曜日以外の場合
+  //1日より前の空白部分を前月末で埋める
+  if(bedy!=6){
+  for(j=bedy; j>=0; j--,i++){
+  days[i]=bedd-j;
+  }
+  //当月1日から月末まで埋める。
+  for(j=1;j<=thdd;j++,i++){
+  days[i]=j;
+  }
+  //月末より後の空白部分を来月の日付で埋める。
+  if(thdy!=6){
+  for(j=1;thdy+j<=6;j++,i++){
+  days[i]=j;
+  }}
+  }else if(bedy==6){ //前月末が土曜日の場合
+  //当月1日から月末まで埋める。
+  for(i=0;i<thdd;i++){
+  days[i]=i+1;
+  }
+  //月末より後の空白部分を来月の日付で埋める。
+  if(thdy!=6){
+  for(j=1;thdy+j<=6;j++,i++){
+  days[i]=j;
+  }}}
+  totalDays=i;
+
+   // 描画
+  var out = "<table>";
+  out += "<caption>";
+  // 今月へ戻るリンク
+  out += "<a href='#' onclick='setCalendar();return false;'>今月 </a>";
+  // 前月へ移動リンク
+  out += "<a href='#' yy='"+yy+"' mm='"+mm+"' onclick='backmm(this);return false;'>\<\< </a>";
+  // 翌月へ移動リンク
+  out += "<a href='#' yy='"+yy+"' mm='"+mm+"' onclick='nextmm(this);return false;'>\>\></a>";
+  out += +yy+'年'+mm+'月'; 
+  out += "</caption>";
+
+  var youbi = ["日", "月", "火", "水", "木", "金", "土"];
+  out += "<tr>";
+  for (var i in youbi) {
+    out += "<td>"+youbi[i]+"</td>";
+  }
+
+
+  // 行数を計算する
+  var row = totalDays/7;
+  // 行数分だけ回す
+  for (var i=0; i<row; i++) {
+    out += "<tr>";
+    for (var j=0; j<7; j++) {
+     out += "<td class='tdlink' row='"+i+"' yy='"+yy+"' mm='"+mm+"' dd='"+days[j+i*7]+"' onclick='show(this);return false;'>"+days[j+i*7]+"</td>";
+    }
+    out += "</tr>";
+  }
+  out += "</table>";
+
+  // htmlへ渡す
+  document.getElementById("result").innerHTML = out;
+}
+
+// 前月へ移動
+function backmm(e) {
+  var yy = e.getAttribute('yy');
+  var mm = e.getAttribute('mm');
+  if (mm != 1) {
+    mm = parseInt(mm) -1;
+  } else if (mm == 1) { //年が変わる場合
+    mm = 12;
+    yy = parseInt(yy) - 1;
+  }
+  setCalendar(yy, mm);
+}
+
+// 翌月へ移動
+function nextmm(e) {
+  var yy = e.getAttribute('yy');
+  var mm = e.getAttribute('mm');
+  if (mm != 12) {
+    mm = parseInt(mm) + 1; 
+  } else if (mm == 12) {
+    mm = 1;
+    yy = parseInt(yy) + 1;
+  }
+  setCalendar(yy, mm);
+}
+
+//////////////////////////////////////////////////
+var count=0;  //課題の総数      
+var hw=[];    //課題を格納するためのグローバル変数
+hw[0] = new homework_data(0,0,0,"なし");
+hw[1] = new homework_data(0,0,0,"なし");
+//////////////////////////////////////////////////
+
+//課題のデータの格納
+function homework_data(yy,mm,dd,hw){
+ this.yy=yy;
+ this.mm=mm;
+ this.dd=dd;
+ this.hw=hw;
+}
+
+//入力フォームのリセット
+function reset(){
+  document.HW.year.value="";
+  document.HW.month.value="";
+  document.HW.day.value="";
+  document.HW.homework.value="";
+}
+
+//課題データの追加
+function hwAdd(){
+  var p=getPlace(document.HW.year.value,document.HW.month.value,document.HW.day.value); //時間でソート
+  for(var i=count;i>=p;i--){
+    hw[i]=hw[i-1];
+  }
+  hw[p]=new homework_data(document.HW.year.value,document.HW.month.value,document.HW.day.value,document.HW.homework.value); //追加
+  count++;
+  reset();
+  setList();
+}
+
+//yy年mm月dd日の課題一覧を文字列にして返す。
+function hwAlert(yy,mm,dd){
+ var s="提出課題:\n";
+ var check=0;
+  for(var k=0;k<count;k++){
+  if(hw[k].yy==yy && hw[k].mm==mm && hw[k].dd==dd){
+ s+=hw[k].hw+'\n';
+ check=1;
+ }
+}
+  if(check==0) s+="なし"
+ return s;
+}
+
+//課題データの削除
+function hwDelete(){
+  var year=document.HW.year.value;
+  var month=document.HW.month.value;
+  var day=document.HW.day.value;
+  var homework=document.HW.homework.value;
+  for(var k=count-1; k>=0;k--){
+   if(hw[k].yy==year && hw[k].mm==month && hw[k].dd==day && hw[k].hw==homework){
+    if(k==0 && count==1){
+      hw[0].yy=0;
+      hw[0].mm=0;
+      hw[0].dd=0;
+      hw[0].hw=0;
+    }else{
+     for(var l=k;l<count;l++){
+       hw[l]=hw[l+1];
+     }
+       count--;
+    }
+  }}
+  reset();
+  setList();
+}
+
+
+// 日付をクリックしたときに日付をアラートさせる
+function show(e) {
+  var row = e.getAttribute('row');
+  var yy = e.getAttribute('yy');
+  var mm = e.getAttribute('mm');
+ var dd = e.getAttribute('dd');
+// クリック対象が1行目かつ前月の日付  
+if (row == 0 && dd > 7) {
+    if (mm != 1) {
+      mm = parseInt(mm) -1;
+    } else if (mm == 1) {
+      yy = parseInt(yy) - 1;
+      mm = 12;
+    }
+  }
+// クリック対象が最終行かつ翌月の日付
+  if ((row == 4 || row == 5) && dd < 7) {
+    if (mm != 12) {
+      mm = parseInt(mm) + 1;
+    } else if (mm == 12) {
+      yy = parseInt(yy) + 1;
+      mm = 1;
+    }
+  }
+　　//アラート
+　　s=hwAlert(yy,mm,dd);
+    alert(yy+'/'+mm+'/'+dd+'\n'+s);
+}
+
+function setList(){
+  var out = "<table>";
+  out += "<caption>課題一覧</captiton>";
+  out += "<tr><td>日付</td><td>教科名</td></tr>"; 
+  if(hw[0].yy==0){
+  out += "<tr><td></td><td>なし</td></tr>";
+  }else{
+   for(var i=0; i<count; i++){
+     out += "<tr>";
+     out += "<td>"+hw[i].yy+"/"+hw[i].mm+"/"+hw[i].dd+"</td>";
+     out += "<td>"+hw[i].hw+"</td>";
+     out += "</tr>";
+   }
+  }
+  document.getElementById("list").innerHTML = out; 
+}
+
+//日付の前後を判定するプログラム
+//1の日付が2の日付より昔なら1をそれ以外は-1を返す。
+function isLater(y1,m1,d1,y2,m2,d2){
+  if(y2-y1 > 0){ return 1;
+  }else if(y2-y1 == 0){
+    if(m2-m1 > 0){ return 1;  
+    }else if(m2-m1 == 0){ 
+      if(d2-d1 > 0){ return 1;
+      }
+    }
+  }
+  return -1;
+}
+
+//配列hw[]への挿入位置を返す関数
+function getPlace(y,m,d){
+  var p=0;
+  for(var i=0; i<count; i++){
+    if(isLater(hw[i].yy,hw[i].mm,hw[i].dd,y,m,d)==1){
+      p++;
+    }
+  }
+  return p;
+}
+
+</script>
+
+<style type="text/css">
+table {
+  align: center;
+  border: solid 1px #000000;
+}
+th {
+  border: solid 1px #000000;
+}
+td {
+  border: solid 1px #000000;
+}
+.tdlink {
+  cursor: pointer;
+}
+.tdlink:hover {
+  background-color: #FFFF00;
+}
+.dtable_s1 tr th:nth-of-type(1){
+  color:#FF6A6A
+}
+.dtable_s1 td:nth-of-type(1){
+  color:#FF6A6A
+}
+.dtable_s1 tr th:nth-of-type(7){
+  color:#0287FF
+}
+.dtable_s1 tr td:nth-of-type(7){
+  color:#0287FF
+}
+.dtable{
+  display:table;
+  border-spacing:5px;
+}
+.dtable_s1{
+  display:table-cell;
+}
+.dtable_s2{
+  display:table-cell;
+}
+</style>
+</head>
+<body>
+<div class="dtable">
+<div id="result" class="dtable_s1"></div>
+<div id="list" class="dtable_s2"></div>
+</div>
+<form name="HW">
+  提出日: <input type= "text" name="year" size=5>年
+        <input type="text" name="month" size=2>月
+	<input type="text" name="day" size=2>日<br>
+  教科: <input type= "text" name="homework" size=10><br>
+<input type="button" name="hwadd" onclick="hwAdd()" value="追加">
+<input type="button" name="hwadd" onclick="hwDelete()" value="削除">
+</body>
+</html>
